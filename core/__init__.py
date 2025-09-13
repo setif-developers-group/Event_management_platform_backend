@@ -1,0 +1,1 @@
+default_app_config = 'otp_admin.apps.OtpAdminConfig'
