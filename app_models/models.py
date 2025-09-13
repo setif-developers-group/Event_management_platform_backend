@@ -6,7 +6,7 @@ import cloudinary.uploader
 
 class Partner(models.Model):
     name = models.CharField(max_length=100)
-    logo = CloudinaryField('sdg_skills_lab/Partners_logo', blank=True, null=True)
+    logo = CloudinaryField(folder='sdg_skills_lab/Partners_logo', blank=True, null=True)
     short_description = models.TextField()
     website = models.URLField()
     def __str__(self):
@@ -16,7 +16,7 @@ class Partner(models.Model):
 class Speaker(models.Model):
     name = models.CharField(max_length=100)
     bio = models.TextField()
-    image = CloudinaryField('sdg_skills_lab/Speakers_imgs', blank=True, null=True)
+    image = CloudinaryField(folder='sdg_skills_lab/Speakers_imgs', blank=True, null=True)
     partner = models.ForeignKey(Partner, on_delete=models.SET_NULL, null=True, blank=True)
     def __str__(self):
         return self.name
@@ -26,8 +26,8 @@ class Workshop(models.Model):
     description = models.TextField()
     date = models.DateField()
     duration = models.DurationField()
-    speaker = models.ForeignKey(Speaker, on_delete=models.CASCADE)
-    partner = models.ForeignKey(Partner, on_delete=models.SET_NULL, null=True, blank=True)
+    speaker = models.ForeignKey(Speaker, on_delete=models.CASCADE, related_name='workshops')
+    partner = models.ForeignKey(Partner, on_delete=models.SET_NULL, null=True, blank=True, related_name='workshops')
 
     def __str__(self):
         return self.title
@@ -56,7 +56,7 @@ class Registration(models.Model):
 class Certificate(models.Model):
     registration = models.OneToOneField(Registration, on_delete=models.CASCADE)
     issued_date = models.DateTimeField(auto_now_add=True)
-    certificate_file = CloudinaryField('sdg_skills_lab/Certificates', blank=True, null=True)
+    certificate_file = CloudinaryField(folder='sdg_skills_lab/Certificates', blank=True, null=True)
     def __str__(self):
         return f"Certificate for {self.registration.first_name} {self.registration.last_name} - {self.registration.workshop.title}"
 
@@ -64,7 +64,7 @@ class Certificate(models.Model):
 class Notification(models.Model):
     registration = models.ForeignKey(Registration, on_delete=models.CASCADE)
     sent = models.BooleanField(default=False)
-    sent_date = models.DateTimeField(null=True, blank=True)
+    sent_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Notification for {self.registration.first_name} {self.registration.last_name} - {self.registration.workshop.title}"
