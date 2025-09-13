@@ -1,0 +1,70 @@
+from django.db import models
+from cloudinary.models import CloudinaryField
+import cloudinary.uploader
+
+# Create your models here.
+
+class Partner(models.Model):
+    name = models.CharField(max_length=100)
+    logo = CloudinaryField('sdg_skills_lab/Partners_logo', blank=True, null=True)
+    short_description = models.TextField()
+    website = models.URLField()
+    def __str__(self):
+        return self.name
+
+
+class Speaker(models.Model):
+    name = models.CharField(max_length=100)
+    bio = models.TextField()
+    image = CloudinaryField('sdg_skills_lab/Speakers_imgs', blank=True, null=True)
+    partner = models.ForeignKey(Partner, on_delete=models.SET_NULL, null=True, blank=True)
+    def __str__(self):
+        return self.name
+    
+class Workshop(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    date = models.DateField()
+    duration = models.DurationField()
+    speaker = models.ForeignKey(Speaker, on_delete=models.CASCADE)
+    partner = models.ForeignKey(Partner, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return self.title
+
+
+class Registration(models.Model):
+    workshop = models.ForeignKey(Workshop, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    email = models.EmailField()
+    university = models.CharField(max_length=200)
+    registration_date = models.DateTimeField(auto_now_add=True)
+    confirmed = models.BooleanField(default=False)
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['email', 'workshop'],
+                name='unique_email_workshop'
+            )
+        ]
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} - {self.workshop.title}"
+    
+
+class Certificate(models.Model):
+    registration = models.OneToOneField(Registration, on_delete=models.CASCADE)
+    issued_date = models.DateTimeField(auto_now_add=True)
+    certificate_file = CloudinaryField('sdg_skills_lab/Certificates', blank=True, null=True)
+    def __str__(self):
+        return f"Certificate for {self.registration.first_name} {self.registration.last_name} - {self.registration.workshop.title}"
+
+
+class Notification(models.Model):
+    registration = models.ForeignKey(Registration, on_delete=models.CASCADE)
+    sent = models.BooleanField(default=False)
+    sent_date = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Notification for {self.registration.first_name} {self.registration.last_name} - {self.registration.workshop.title}"

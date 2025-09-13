@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from decouple import config, Csv
+import cloudinary
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,6 +30,11 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=[], cast=Csv())
 
+cloudinary.config( 
+  	cloud_name = config('CLOUD_NAME'),
+  	api_key = config('CLOUD_API_KEY'),
+  	api_secret = config('CLOUD_API_SECRET')
+)
 
 # Application definition
 
@@ -41,7 +48,11 @@ INSTALLED_APPS = [
     'django_otp',
     'django_otp.plugins.otp_email',
     'rest_framework',
+    'cloudinary',
+    'cloudinary_storage',
     'otp_admin',
+    'app_models',
+    
 ]
 
 MIDDLEWARE = [
@@ -142,3 +153,9 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
 # OTP Email settings
 OTP_EMAIL_SENDER = config('OTP_EMAIL_SENDER', default='ay28mene@gmail.com')
+
+
+
+
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
