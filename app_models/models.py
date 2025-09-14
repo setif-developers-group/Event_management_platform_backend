@@ -51,7 +51,8 @@ class Registration(models.Model):
         ]
     def __str__(self):
         return f"{self.first_name} {self.last_name} - {self.workshop.title}"
-    
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}"
 
 class Certificate(models.Model):
     registration = models.OneToOneField(Registration, on_delete=models.CASCADE)
