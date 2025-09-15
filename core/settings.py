@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from decouple import config, Csv
 import cloudinary
+import os
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -105,7 +106,7 @@ DATABASES = {
         'PORT': config('DB_PORT'),  # This should be 6543
         '''''
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        "NAME": os.path.join(BASE_DIR, "db", "db.sqlite3"),
     }
 }
 
