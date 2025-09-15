@@ -1,11 +1,14 @@
 from django.shortcuts import render
-from rest_framework import generics, filters
+from rest_framework.response import Response
+from rest_framework import generics, filters, status
 from app_models.models import Workshop, Speaker, Partner, Registration, Certificate
 from .serializers import (WorkshopSerializer, SpeakerSerializer, 
                           PartnerSerializer, RegistrationSerializer, 
                           CertificateSerializer)
 # Create your views here.
-
+class HealthCheckView(generics.GenericAPIView):
+    def get(self, request, *args, **kwargs):
+        return Response({"status": "ok"}, status=status.HTTP_200_OK)
 
 class WorkshopListCreateView(generics.ListAPIView):
     queryset = Workshop.objects.select_related('speaker', 'partner').all()
