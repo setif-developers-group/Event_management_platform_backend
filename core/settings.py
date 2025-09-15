@@ -94,19 +94,19 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        '''
+'''
         'ENGINE': config('DB_ENGINE'),
         'NAME': config('DB_NAME'),
         'USER': config('DB_USER'),  # This should be postgres.gzdtityhzriesmxtncpm
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),  # This should be aws-1-us-east-2.pooler.supabase.com
         'PORT': config('DB_PORT'),  # This should be 6543
-        '''''
+'''
+
+DATABASES = {
+    'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        "NAME": os.path.join(BASE_DIR, "db", "db.sqlite3"),
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
