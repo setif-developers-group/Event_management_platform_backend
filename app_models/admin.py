@@ -47,3 +47,4 @@ class NotificationAdmin(admin.ModelAdmin):
     list_display = ('registration', 'sent_date')
     search_fields = ('registration__first_name', 'registration__last_name')
     list_filter = ('sent_date',)
+

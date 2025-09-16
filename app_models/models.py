@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinLengthValidator
 from cloudinary.models import CloudinaryField
 import cloudinary.uploader
 
@@ -7,15 +8,15 @@ import cloudinary.uploader
 class Partner(models.Model):
     name = models.CharField(max_length=100)
     logo = CloudinaryField(folder='sdg_skills_lab/Partners_logo', blank=True, null=True)
-    short_description = models.TextField()
-    website = models.URLField()
+    short_description = models.TextField(null=True, blank=True)
+    website = models.URLField(null=True, blank=True)
     def __str__(self):
         return self.name
 
 
 class Speaker(models.Model):
     name = models.CharField(max_length=100)
-    bio = models.TextField()
+    bio = models.TextField(null=True, blank=True)
     image = CloudinaryField(folder='sdg_skills_lab/Speakers_imgs', blank=True, null=True)
     partner = models.ForeignKey(Partner, on_delete=models.SET_NULL, null=True, blank=True)
     def __str__(self):
@@ -32,16 +33,18 @@ class Workshop(models.Model):
     def __str__(self):
         return self.title
 
-
+class AttendanceType(models.TextChoices):
+    ONLINE = "online", "online"
+    ON_SITE = "on-site", "On-site"
 class Registration(models.Model):
     workshop = models.ForeignKey(Workshop, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField()
-    university = models.CharField(max_length=200)
+    phone_number = models.CharField(max_length=10, validators=[MinLengthValidator(10)])
+    attendance_type = models.CharField(max_length=10, choices=AttendanceType.choices, default=AttendanceType.ON_SITE)
     registration_date = models.DateTimeField(auto_now_add=True)
     confirmed = models.BooleanField(default=False)
-    
     class Meta:
         constraints = [
             models.UniqueConstraint(
