@@ -94,10 +94,10 @@ def create_workshops_from_file(file):
 
     for row in read_values_from_file(file,except_headers):
         partner = Partner.objects.filter(name=row['partner']).first()
-        if partner is None:
+        if partner is None and row['partner'] is not None:
             partner = Partner.objects.create(name=row['partner'])
         speaker = Speaker.objects.filter(name=row['speaker']).first()
-        if speaker is None:
+        if speaker is None and row['speaker'] is not None:
             speaker = Speaker.objects.create(name=row['speaker'])
         Workshop.objects.get_or_create(
                     title=row['title'],
