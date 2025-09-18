@@ -7,6 +7,7 @@ cloudinary==1.44.1
 cryptography==45.0.7
 Django==5.2.6
 django-cloudinary-storage==0.3.0
+django-cors-headers==4.8.0
 django-filter==25.1
 django-otp==1.6.1
 djangorestframework==3.16.1
@@ -31,3 +32,4 @@ sqlparse==0.5.3
 typing_extensions==4.15.0
 uritemplate==4.2.0
 urllib3==2.5.0
+whitenoise==6.10.0
