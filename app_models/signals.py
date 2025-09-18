@@ -1,10 +1,12 @@
-from django.db.models.signals import post_delete,post_save
+from django.db.models.signals import post_delete,post_save, pre_save
 from django.dispatch import receiver
 import cloudinary.uploader
-from .models import Speaker, Partner, Registration, Certificate, Notification
+from .models import Speaker, Partner, Registration, Certificate, Notification, Workshop, TargetModel, UploadModeslByFile
 from django.core.mail import EmailMessage
 from django.conf import settings
 from .utils import generate_registration_badge
+from .utils import create_partners_from_file, create_speakers_from_file, create_workshops_from_file
+
 @receiver(post_delete, sender=Speaker)
 def delete_speaker_image(sender, instance, **kwargs):
     if instance.image:
@@ -96,3 +98,17 @@ def send_confirmation_email(sender, instance: Registration, created, **kwargs):
         notification = Notification.objects.create(registration=instance)
         notification.sent = True
         notification.save()
+
+
+@receiver(pre_save, sender=UploadModeslByFile)
+def create_target_model(sender, instance, **kwargs):
+    
+    if instance.file:
+        if instance.target_model == TargetModel.Workshops:
+            create_workshops_from_file(instance.file)
+        elif instance.target_model == TargetModel.Partners:
+            create_partners_from_file(instance.file)
+        elif instance.target_model == TargetModel.Speakers:
+            create_speakers_from_file(instance.file)
+        instance.file = None
+

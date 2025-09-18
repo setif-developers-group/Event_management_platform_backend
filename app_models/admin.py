@@ -1,8 +1,9 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 
 # Register your models here.
 
-from .models import Speaker, Partner, Workshop, Registration, Certificate, Notification
+from .models import Speaker, Partner, Workshop, Registration, Certificate, Notification, UploadModeslByFile, TargetModel
+
 
 @admin.register(Speaker)
 class SpeakerAdmin(admin.ModelAdmin):
@@ -12,7 +13,7 @@ class SpeakerAdmin(admin.ModelAdmin):
 
 @admin.register(Partner)
 class PartnerAdmin(admin.ModelAdmin):
-    list_display = ('name',)
+    list_display = ('name','short_description', 'website')
     search_fields = ('name',)
 
 @admin.register(Workshop)
@@ -48,3 +49,10 @@ class NotificationAdmin(admin.ModelAdmin):
     search_fields = ('registration__first_name', 'registration__last_name')
     list_filter = ('sent_date',)
 
+
+@admin.register(UploadModeslByFile)
+class UploadModeslByFileAdmin(admin.ModelAdmin):
+    list_display = ('target_model', 'file', 'upload_date')
+    search_fields = ('upload_date',)
+    list_filter = ('target_model', 'upload_date')
+    

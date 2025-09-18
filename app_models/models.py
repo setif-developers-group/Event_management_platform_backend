@@ -12,7 +12,10 @@ class Partner(models.Model):
     website = models.URLField(null=True, blank=True)
     def __str__(self):
         return self.name
-
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name'], name='unique_partner_name')
+        ]
 
 class Speaker(models.Model):
     name = models.CharField(max_length=100)
@@ -21,17 +24,24 @@ class Speaker(models.Model):
     partner = models.ForeignKey(Partner, on_delete=models.SET_NULL, null=True, blank=True)
     def __str__(self):
         return self.name
-    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name', 'bio'], name='unique_speaker_fullinfo')
+        ]
 class Workshop(models.Model):
     title = models.CharField(max_length=200)
-    description = models.TextField()
+    description = models.TextField(null=True, blank=True)
     date = models.DateField()
-    duration = models.DurationField()
-    speaker = models.ForeignKey(Speaker, on_delete=models.CASCADE, related_name='workshops')
+    duration = models.SmallIntegerField()
+    speaker = models.ForeignKey(Speaker, on_delete=models.SET_NULL, null=True, blank=True, related_name='workshops')
     partner = models.ForeignKey(Partner, on_delete=models.SET_NULL, null=True, blank=True, related_name='workshops')
 
     def __str__(self):
         return self.title
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['title'], name='unique_workshop_title')
+        ]
 
 class AttendanceType(models.TextChoices):
     ONLINE = "online", "online"
@@ -72,3 +82,16 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification for {self.registration.first_name} {self.registration.last_name} - {self.registration.workshop.title}"
+    
+class TargetModel(models.TextChoices):
+    Workshops = "workshop"
+    Partners = "partner"
+    Speakers = "speaker"
+
+class UploadModeslByFile(models.Model):
+    target_model = models.CharField(max_length=20, choices=TargetModel.choices, default=TargetModel.Partners)
+    file = models.FileField(null=True)
+    upload_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Upload for {self.target_model} - {self.upload_date} - {self.pk}"
