@@ -33,6 +33,8 @@ class Workshop(models.Model):
     description = models.TextField(null=True, blank=True)
     date = models.DateField()
     duration = models.SmallIntegerField()
+    sessions = models.SmallIntegerField(default=1)
+    week = models.SmallIntegerField(default=1)
     speaker = models.ForeignKey(Speaker, on_delete=models.SET_NULL, null=True, blank=True, related_name='workshops')
     partner = models.ForeignKey(Partner, on_delete=models.SET_NULL, null=True, blank=True, related_name='workshops')
 
@@ -67,6 +69,10 @@ class Registration(models.Model):
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
 
+class Attendance(models.Model):
+    registration = models.ForeignKey(Registration,on_delete=models.CASCADE,related_name='attendances')
+    attendance_date = models.DateTimeField(auto_now_add=True)
+    
 class Certificate(models.Model):
     registration = models.OneToOneField(Registration, on_delete=models.CASCADE)
     issued_date = models.DateTimeField(auto_now_add=True)

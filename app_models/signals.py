@@ -1,7 +1,7 @@
 from django.db.models.signals import post_delete,post_save, pre_save
 from django.dispatch import receiver
 import cloudinary.uploader
-from .models import Speaker, Partner, Registration, Certificate, Notification, Workshop, TargetModel, UploadModeslByFile
+from .models import Speaker, Partner, Registration, Certificate, Notification, Workshop, TargetModel, UploadModeslByFile,Attendance
 from django.core.mail import EmailMessage
 from django.conf import settings
 from .utils import generate_registration_badge
