@@ -90,7 +90,7 @@ def yield_values_from_xlsx_file(file_bytes, expected_headers: list[str]):
         raise ValueError("File headers do not match expected headers")
 
 def create_workshops_from_file(file):
-    except_headers = ['title', 'description', 'date', 'duration', 'speaker', 'partner']
+    except_headers = ['title', 'description', 'date', 'duration','week','sessions', 'speaker', 'partner']
 
     for row in read_values_from_file(file,except_headers):
         partner = Partner.objects.filter(name=row['partner']).first()

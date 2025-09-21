@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'django_otp',
     'django_otp.plugins.otp_email',
     'rest_framework',
+    'rest_framework_simplejwt',
     'drf_spectacular',
     'cloudinary',
     'cloudinary_storage',
@@ -96,9 +97,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-
-DATABASES = {
-    'default': {
+default = {
         'ENGINE': config('DB_ENGINE'),
         'NAME': config('DB_NAME'),
         'USER': config('DB_USER'),  # This should be postgres.gzdtityhzriesmxtncpm
@@ -106,9 +105,14 @@ DATABASES = {
         'HOST': config('DB_HOST'),  # This should be aws-1-us-east-2.pooler.supabase.com
         'PORT': config('DB_PORT'),  # This should be 6543
 
+    } if not config('DEBUG') else {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-}
 
+DATABASES = {
+    'default': default
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -129,6 +133,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_FILTER_BACKENDS': ['rest_framework.filters.SearchFilter']
 }
