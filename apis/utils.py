@@ -19,3 +19,8 @@ def get_time_from_last_registration(attendance: Attendance):
         return 24
     today = datetime.now(tz=ZoneInfo('Africa/Algiers')).date()
     return (today - attendance.attendance_date).hours
+
+
+def is_workshop_finished(workshop):
+    today = datetime.now(tz=ZoneInfo('Africa/Algiers')).date()
+    return today > workshop.date + workshop.duration

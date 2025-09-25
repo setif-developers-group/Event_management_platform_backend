@@ -7,7 +7,7 @@ from .serializers import (WorkshopSerializer, SpeakerSerializer,
                           PartnerSerializer, RegistrationSerializer, 
                           CertificateSerializer,
                           AttendanceSerializer,WorkshopAllSerializer)
-from .utils import get_registration_week_nuber, get_time_from_last_registration
+from .utils import get_registration_week_nuber, get_time_from_last_registration, is_workshop_finished
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 # Create your views here.
 
@@ -74,7 +74,27 @@ class RegistrationCreateView(generics.CreateAPIView):
             return Response({"error": "Registration is closed or didn't start yet"}, status=status.HTTP_400_BAD_REQUEST)
         return super().create(request, *args, **kwargs)
 
+class CertificateListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = Certificate.objects.all()
+    serializer_class = CertificateSerializer
 
+class GenerateCertificatesView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, workshop, *args, **kwargs):
+        workshop_instance = Workshop.objects.filter(id=workshop).first()
+        if workshop_instance is None:
+            return Response({"error": "Workshop not found"}, status=status.HTTP_404_NOT_FOUND)
+        if not is_workshop_finished(workshop_instance):
+            return Response({"error": "Workshop is not finished yet"}, status=status.HTTP_400_BAD_REQUEST)
+        registration = Registration.objects.filter(workshop=workshop_instance, confirmed=True)
+        create_counter = 0
+        for reg in registration:
+            if reg.attendances.count() >= (workshop_instance.sessions * 0.8) and not reg.certificate:
+                Certificate.objects.create(registration=reg)
+                create_counter += 1
+        return Response({"status": f"{create_counter} certificates created"}, status=status.HTTP_200_OK)
 
 class CertificateDetailView(generics.RetrieveAPIView):
     queryset = Certificate.objects.all()

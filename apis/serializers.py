@@ -12,11 +12,15 @@ class SpeakersNameSerializer(serializers.ModelSerializer):
         model = Speaker
         fields = ['name']
 
+class PartnerNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Partner
+        fields = ['name']
 
 class WorkshopAllSerializer(serializers.ModelSerializer):
     # add only the names of speakers
     speakers = SpeakersNameSerializer(many=True, read_only=True)
-
+    partner = PartnerNameSerializer(read_only=True)
     class Meta:
         model = Workshop
         fields = '__all__'
@@ -31,6 +35,7 @@ class SpeakerSerializer(serializers.ModelSerializer):
 
 
 class PartnerSerializer(serializers.ModelSerializer):
+    logo = serializers.URLField(source='logo.url', read_only=True)
     class Meta:
         model = Partner
         fields = '__all__'
@@ -42,8 +47,13 @@ class RegistrationSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['registration_date', 'confirmed']
 
-
+class WorkshopSimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Workshop
+        fields = ['id', 'title', 'date', 'duration']
 class CertificateSerializer(serializers.ModelSerializer):
+    workshop = WorkshopSimpleSerializer(source='registration.workshop', read_only=True)
+    registration_info = RegistrationSerializer(source='registration', read_only=True)
     class Meta:
         model = Certificate
         fields = '__all__'

@@ -10,6 +10,8 @@ urlpatterns = [
     path('partners/', views.PartnerListView.as_view(), name='partner-list-create'),
     path('partners/<int:id>/', views.PartnerDetailView.as_view(), name='partner-detail'),
     path('registrations/', views.RegistrationCreateView.as_view(), name='registration-list-create'),
+    path('certificates/', views.CertificateListView.as_view(), name='certificate-list'),
+    path('certificates/generate/<int:workshop>/', views.GenerateCertificatesView.as_view(), name='generate-certificates'),
     path('certificates/<int:id>/', views.CertificateDetailView.as_view(), name='certificate-detail'),
     path('attendances/', views.AttendanceCreateView.as_view(), name='attendance-list-create'),
 ]
