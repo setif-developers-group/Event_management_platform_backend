@@ -2,7 +2,7 @@ from django.contrib import admin, messages
 
 # Register your models here.
 
-from .models import Speaker, Partner, Workshop, Registration, Certificate, Notification, UploadModeslByFile, TargetModel
+from .models import Speaker, Partner, Workshop, Registration, Certificate, Notification, UploadModeslByFile, TargetModel, Attendance
 
 
 @admin.register(Speaker)
@@ -55,4 +55,11 @@ class UploadModeslByFileAdmin(admin.ModelAdmin):
     list_display = ('target_model', 'file', 'upload_date')
     search_fields = ('upload_date',)
     list_filter = ('target_model', 'upload_date')
-    
+
+
+@admin.register(Attendance)
+class AttendanceAdmin(admin.ModelAdmin):
+    list_display = ('registration__first_name', 'registration__last_name', 'attendance_date')
+    search_fields = ('registration__first_name', 'registration__last_name')
+    list_filter = ('attendance_date', 'registration__workshop', 'registration__first_name', 'registration__last_name')
+
