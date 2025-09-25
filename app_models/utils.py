@@ -1,4 +1,5 @@
 import qrcode
+import json
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 from .models import Registration , Workshop, Partner, Speaker
@@ -6,6 +7,12 @@ import pandas as pd
 import csv
 import io
 def generate_qr_code(registration: Registration):
+    data = {
+        "registration_id": registration.id,
+        "name": f"{registration.first_name} {registration.last_name}",
+        "workshop": registration.workshop.title,
+    }
+    json_data = json.dumps(data)
     qr = qrcode.QRCode(
                 version=1,
                 error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -13,7 +20,7 @@ def generate_qr_code(registration: Registration):
                 border=4,
                 
             )
-    qr.add_data(f'Registration ID: {registration.id}, Name: {registration.first_name} {registration.last_name}, Workshop: {registration.workshop.title}')
+    qr.add_data(json_data)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
 
