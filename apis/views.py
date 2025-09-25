@@ -6,7 +6,7 @@ from app_models.models import Workshop, Speaker, Partner, Registration, Certific
 from .serializers import (WorkshopSerializer, SpeakerSerializer, 
                           PartnerSerializer, RegistrationSerializer, 
                           CertificateSerializer,
-                          AttendanceSerializer)
+                          AttendanceSerializer,WorkshopAllSerializer)
 from .utils import get_registration_week_nuber, get_time_from_last_registration
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 # Create your views here.
@@ -17,13 +17,20 @@ class HealthCheckView(views.APIView):
         return Response({"status": "ok"}, status=status.HTTP_200_OK)
 
 class WorkshopListView(generics.ListAPIView):
-    queryset = Workshop.objects.select_related('speaker', 'partner').all()
+    queryset = Workshop.objects.all()
     serializer_class = WorkshopSerializer
     filter_backends = [filters.SearchFilter]
-    search_fields = ['title', 'description', 'speaker__name', 'partner__name'] 
+    search_fields = ['title', 'description', 'speakers__name', 'partner__name'] 
 
     def get_queryset(self):
         return super().get_queryset().filter(week=get_registration_week_nuber())
+
+class WorkshopListAllView(generics.ListAPIView):
+    queryset = Workshop.objects.all()
+    serializer_class = WorkshopAllSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['title', 'description', 'speakers__name', 'partner__name'] 
+
 
 class WorkshopDetailView(generics.RetrieveAPIView):
     queryset = Workshop.objects.all()

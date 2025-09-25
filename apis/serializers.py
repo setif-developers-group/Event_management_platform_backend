@@ -7,6 +7,23 @@ class WorkshopSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class SpeakersNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Speaker
+        fields = ['name']
+
+
+class WorkshopAllSerializer(serializers.ModelSerializer):
+    # add only the names of speakers
+    speakers = SpeakersNameSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Workshop
+        fields = '__all__'
+        
+    
+
+
 class SpeakerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Speaker

@@ -35,7 +35,7 @@ class Workshop(models.Model):
     duration = models.SmallIntegerField()
     sessions = models.SmallIntegerField(default=1)
     week = models.SmallIntegerField(default=1)
-    speaker = models.ForeignKey(Speaker, on_delete=models.SET_NULL, null=True, blank=True, related_name='workshops')
+    speakers = models.ManyToManyField(to = Speaker, blank=True, related_name='workshops')
     partner = models.ForeignKey(Partner, on_delete=models.SET_NULL, null=True, blank=True, related_name='workshops')
 
     def __str__(self):
@@ -47,9 +47,9 @@ class Workshop(models.Model):
 
 class AttendanceType(models.TextChoices):
     ONLINE = "online", "online"
-    ON_SITE = "on-site", "On-site"
+    ON_SITE = "on-site", "on-site"
 class Registration(models.Model):
-    workshop = models.ForeignKey(Workshop, on_delete=models.CASCADE)
+    workshop = models.ForeignKey(Workshop, on_delete=models.CASCADE, related_name='registrations')
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField()
@@ -74,11 +74,17 @@ class Attendance(models.Model):
     attendance_date = models.DateTimeField(auto_now_add=True)
     
 class Certificate(models.Model):
-    registration = models.OneToOneField(Registration, on_delete=models.CASCADE)
+    registration = models.OneToOneField(Registration, on_delete=models.CASCADE, related_name='certificate')
     issued_date = models.DateTimeField(auto_now_add=True)
     certificate_file = CloudinaryField(folder='sdg_skills_lab/Certificates', blank=True, null=True)
     def __str__(self):
         return f"Certificate for {self.registration.first_name} {self.registration.last_name} - {self.registration.workshop.title}"
+
+class WorkshopCertificate(models.Model):
+    workshop = models.ForeignKey(Workshop, on_delete=models.CASCADE)
+    certificate_file = CloudinaryField(folder='sdg_skills_lab/WorkshopCertificates', blank=True, null=True)
+    def __str__(self):
+        return f"Certificates for {self.workshop.title}"
 
 
 class Notification(models.Model):

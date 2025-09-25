@@ -19,8 +19,8 @@ class PartnerAdmin(admin.ModelAdmin):
 @admin.register(Workshop)
 class WorkshopAdmin(admin.ModelAdmin):
     list_display = ('title', 'date')
-    search_fields = ('title','description', 'speaker__name', 'partner__name')
-    list_filter = ('date', 'speaker', 'partner')
+    search_fields = ('title','description', 'speakers__name', 'partner__name')
+    list_filter = ('date', 'speakers', 'partner')
 
 @admin.register(Registration)
 class RegistrationAdmin(admin.ModelAdmin):

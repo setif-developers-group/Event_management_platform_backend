@@ -93,23 +93,32 @@ def create_workshops_from_file(file):
     except_headers = ['title', 'description', 'date', 'duration','week','sessions', 'speaker', 'partner']
 
     for row in read_values_from_file(file,except_headers):
-        partner = Partner.objects.filter(name=row['partner']).first()
+        if row['partner']:
+            partner = Partner.objects.filter(name=row['partner'].strip()).first()
+        else:
+            partner = None
         if partner is None and row['partner'] is not None:
-            partner = Partner.objects.create(name=row['partner'])
-        speaker = Speaker.objects.filter(name=row['speaker']).first()
-        if speaker is None and row['speaker'] is not None:
-            speaker = Speaker.objects.create(name=row['speaker'])
-        Workshop.objects.get_or_create(
+            partner = Partner.objects.create(name=row['partner'].strip())
+        speakers = row['speaker'].split(',') if row['speaker'] else []
+        speaker = None
+        speakers_ids = []
+        for speaker_name in speakers:
+            speaker = Speaker.objects.filter(name=speaker_name.strip()).first()
+            if speaker is None:
+                speaker = Speaker.objects.create(name=speaker_name.strip(), bio="Bio not provided", partner=partner)
+            speakers_ids.append(speaker.id)
+        workshop = Workshop.objects.get_or_create(
                     title=row['title'],
                     defaults={
                         'description': row['description'],
                         'date': row['date'],
                         'duration': row['duration'],
-                        'speaker': speaker,
                         'partner': partner,
+                        'week': row['week'] if row['week'] is not None else 1,
+                        'sessions': row['sessions'] if row['sessions'] is not None else row['duration']
                     }
                 )
-
+        workshop[0].speakers.set(speakers_ids)
 
     return
 
@@ -132,3 +141,17 @@ def create_partners_from_file(file):
 
 
     return
+
+def create_certificate(registration: Registration):
+    ...
+
+def create_certificates(workshop: Workshop):
+    regisrtations:list[Registration] = workshop.registrations.all()
+    for registration in regisrtations:
+        if not registration.certificate and registration.is_confirmed and (registration.attendances.count() >= (workshop.sessions * 0.8)):
+            yield registration
+
+def create_workshop_certificates(workshop: Workshop):
+    for registration in create_certificates(workshop):
+        create_certificate(registration)    
+

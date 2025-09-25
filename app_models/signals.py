@@ -1,7 +1,7 @@
 from django.db.models.signals import post_delete,post_save, pre_save
 from django.dispatch import receiver
 import cloudinary.uploader
-from .models import Speaker, Partner, Registration, Certificate, Notification, Workshop, TargetModel, UploadModeslByFile,Attendance
+from .models import Speaker, Partner, Registration, Certificate, Notification, Workshop, TargetModel, UploadModeslByFile,Attendance, WorkshopCertificate
 from django.core.mail import EmailMessage
 from django.conf import settings
 from .utils import generate_registration_badge
@@ -112,3 +112,9 @@ def create_target_model(sender, instance, **kwargs):
             create_speakers_from_file(instance.file)
         instance.file = None
 
+@receiver(pre_save, sender=WorkshopCertificate)
+def create_workshop_certificate(sender, instance, **kwargs):
+    if not instance.certificate_file:
+        workshop: Workshop = instance.workshop
+        
+                
