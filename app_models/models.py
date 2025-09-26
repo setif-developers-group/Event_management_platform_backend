@@ -8,7 +8,7 @@ import cloudinary.uploader
 class Partner(models.Model):
     name = models.CharField(max_length=100)
     logo = CloudinaryField(folder='sdg_skills_lab/Partners_logo', blank=True, null=True)
-    short_description = models.TextField(null=True, blank=True)
+    short_description = models.TextField(null=True, blank=True, max_length=500)
     website = models.URLField(null=True, blank=True)
     def __str__(self):
         return self.name
@@ -26,11 +26,11 @@ class Speaker(models.Model):
         return self.name
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['name', 'bio'], name='unique_speaker_fullinfo')
+            models.UniqueConstraint(fields=['name'], name='unique_speaker_fullinfo')
         ]
 class Workshop(models.Model):
     title = models.CharField(max_length=200)
-    description = models.TextField(null=True, blank=True)
+    description = models.TextField(null=True, blank=True, max_length=1000)
     date = models.DateField()
     duration = models.SmallIntegerField()
     sessions = models.SmallIntegerField(default=1)
