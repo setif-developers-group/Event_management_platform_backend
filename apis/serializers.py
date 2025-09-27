@@ -10,7 +10,7 @@ class WorkshopSerializer(serializers.ModelSerializer):
 class SpeakersNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Speaker
-        fields = ['name']
+        fields = ['name', 'contact']
 
 class PartnerNameSerializer(serializers.ModelSerializer):
     class Meta:

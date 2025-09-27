@@ -96,7 +96,8 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+import pymysql
+pymysql.install_as_MySQLdb()
 default = {
         'ENGINE': config('DB_ENGINE'),
         'NAME': config('DB_NAME'),
@@ -105,7 +106,7 @@ default = {
         'HOST': config('DB_HOST'),  # This should be aws-1-us-east-2.pooler.supabase.com
         'PORT': config('DB_PORT'),  # This should be 6543
 
-    } if not config('DEBUG') else {
+    }if not config('DEBUG', default=False, cast=bool) else {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }

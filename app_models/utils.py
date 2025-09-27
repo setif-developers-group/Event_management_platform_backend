@@ -6,6 +6,8 @@ from .models import Registration , Workshop, Partner, Speaker
 import pandas as pd
 import csv
 import io
+import textwrap
+
 def generate_qr_code(registration: Registration):
     data = {
         "registration_id": registration.id,
@@ -28,40 +30,65 @@ def generate_qr_code(registration: Registration):
             
     return img
 
+def draw_multiline_text_centered(draw, text, center_pos, font, max_chars=51, fill='black'):
+    """
+    Draw text centered, with automatic line wrapping if text exceeds max_chars
+    """
+    # Split text if too long
+    if len(text) > max_chars:
+        lines = textwrap.wrap(text, width=max_chars)
+    else:
+        lines = [text]
+    
+    # Calculate positioning
+    line_height = font.size + 5  # Add some spacing between lines
+    total_height = len(lines) * line_height
+    start_y = center_pos[1] - (total_height // 2)
+    
+    # Draw each line centered
+    for i, line in enumerate(lines):
+        line_width = draw.textlength(line, font=font)
+        line_x = center_pos[0] - (line_width // 2)
+        line_y = start_y + (i * line_height)
+        draw.text((line_x, line_y), line, fill=fill, font=font)
+
 def generate_registration_badge(instance: Registration):
     name_center = (540, 1085)
     name_text = instance.get_full_name()
     workshop_text = instance.workshop.title
-    workshop_center = (540, 650)
+    workshop_center = (540, 655)
+    
     img = Image.open('email_inv.png')
     draw = ImageDraw.Draw(img)
-
     font_48 = ImageFont.truetype("Roboto-Medium.ttf", 48)
     font_32 = ImageFont.truetype("Roboto-Medium.ttf", 32)
-
-    # Get text width to center it
+    
+    # Draw name (you might want to wrap long names too)
     name_width = draw.textlength(name_text, font=font_48)
-
-    # Calculate where to start drawing (left edge)
     text_x = name_center[0] - (name_width // 2)
     text_y = name_center[1]
-    # Draw the text
     draw.text((text_x, text_y), name_text, fill='black', font=font_48)
-
-    # Draw workshop title
-    workshop_width = draw.textlength(workshop_text, font=font_32)
-    workshop_x = workshop_center[0] - (workshop_width // 2)
-    workshop_y = workshop_center[1]
-    draw.text((workshop_x, workshop_y), workshop_text, fill='black', font=font_32)
-
+    
+    # Draw workshop title with automatic wrapping
+    draw_multiline_text_centered(
+        draw=draw,
+        text=workshop_text,
+        center_pos=workshop_center,
+        font=font_32,
+        max_chars=51,  # Adjust this value as needed
+        fill='black'
+    )
+    
+    # Add QR code
     qr = generate_qr_code(instance)
-
-    qr_position = (373,1213)
+    qr_position = (373, 1213)
     img.paste(qr, qr_position)
+    
     badge_buffer = BytesIO()
     img.save(badge_buffer, format='PNG')
     badge_buffer.seek(0)  # Move to the beginning of the buffer
     return badge_buffer
+
 def ckeck_headers(headers,expected_headers: list[str]):
     return all(header in headers for header in expected_headers)
 
@@ -130,13 +157,13 @@ def create_workshops_from_file(file):
     return
 
 def create_speakers_from_file(file):
-    except_headers = ['name', 'bio','partner']
+    except_headers = ['name', 'bio','partner', 'contact']
 
     for row in read_values_from_file(file,except_headers):
         partner = Partner.objects.filter(name=row['partner']).first()
         if partner is None and row['partner'] is not None:
             partner = Partner.objects.create(name=row['partner'])
-        Speaker.objects.get_or_create(name=row['name'], bio=row['bio'], partner=partner)
+        Speaker.objects.get_or_create(name=row['name'], bio=row['bio'], partner=partner, contact=row['contact'])
     return
 
 def create_partners_from_file(file):
