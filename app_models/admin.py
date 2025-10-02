@@ -26,7 +26,7 @@ class WorkshopAdmin(admin.ModelAdmin):
 class RegistrationAdmin(admin.ModelAdmin):
     list_display = ('first_name', 'last_name', 'email', 'workshop')
     search_fields = ('first_name', 'last_name', 'email', 'workshop__title')
-    list_filter = ('workshop', 'confirmed', 'registration_date')
+    list_filter = ('confirmed', 'workshop', 'registration_date')
     def confirm_registration(self, request, queryset):
         count = 0
         for registration in queryset:
@@ -62,4 +62,3 @@ class AttendanceAdmin(admin.ModelAdmin):
     list_display = ('registration__first_name', 'registration__last_name', 'attendance_date')
     search_fields = ('registration__first_name', 'registration__last_name')
     list_filter = ('attendance_date', 'registration__workshop', 'registration__first_name', 'registration__last_name')
-

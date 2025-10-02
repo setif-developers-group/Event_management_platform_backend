@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'django_recaptcha',
     'django_otp',
     'django_otp.plugins.otp_email',
     'rest_framework',
@@ -98,7 +99,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 import pymysql
 pymysql.install_as_MySQLdb()
-default = {
+'''default = {
         'ENGINE': config('DB_ENGINE'),
         'NAME': config('DB_NAME'),
         'USER': config('DB_USER'),  # This should be postgres.gzdtityhzriesmxtncpm
@@ -106,10 +107,11 @@ default = {
         'HOST': config('DB_HOST'),  # This should be aws-1-us-east-2.pooler.supabase.com
         'PORT': config('DB_PORT'),  # This should be 6543
 
-    }if not config('DEBUG', default=False, cast=bool) else {
+    }''' # uncomment this block in production
+default = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    } # comment this block in production
 
 DATABASES = {
     'default': default
@@ -138,7 +140,22 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    'DEFAULT_FILTER_BACKENDS': ['rest_framework.filters.SearchFilter']
+    'DEFAULT_FILTER_BACKENDS': ['rest_framework.filters.SearchFilter'],
+    'DEFAULT_THROTTLE_CLASSES': [
+            'rest_framework.throttling.AnonRateThrottle',
+            'rest_framework.throttling.UserRateThrottle'
+        ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',
+        'user': '500/hour',
+        'login': '10/hour',
+        'username_login': '3/hour',
+        'refresh': '10/hour',
+        'registration_min': '2/min',
+        'registration_hour': '5/hour',
+        'registration_half_day': '7/12_hour',
+        'registration_day': '14/day',
+    },
 }
 
 SPECTACULAR_SETTINGS = {
@@ -185,10 +202,20 @@ OTP_EMAIL_SENDER = config('OTP_EMAIL_SENDER', default='ay28mene@gmail.com')
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
-CORS_ALLOW_ALL_ORIGINS = True
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     "http://localhost:8000",
-#     "http://
-#     "http://your-production-domain.com",
-# ]
+CORS_ALLOWED_ORIGINS = [
+    "https://ssl-api.setif-developers-club.com",
+    "https://skills-lab.setif-developers-club.com",
+    "https://sdg-chat-bots-server.onrender.com",
+    "https://sdg-chat-bots.onrender.com",# for local development
+]
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),  # 1 years for access token
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1), # 1 years for refresh token
+    'AUTH_HEADER_TYPES': ('Bearer',),                # Token type in requests
+}
+
+
+
+RECAPTCHA_PUBLIC_KEY = config('RECAPTCHA_PUBLIC_KEY', default='your-site-key')
+RECAPTCHA_PRIVATE_KEY = config('RECAPTCHA_PRIVATE_KEY', default='your-secret-key')

@@ -6,13 +6,20 @@ from app_models.models import Workshop, Speaker, Partner, Registration, Certific
 from .serializers import (WorkshopSerializer, SpeakerSerializer, 
                           PartnerSerializer, RegistrationSerializer, 
                           CertificateSerializer,
-                          AttendanceSerializer,WorkshopAllSerializer)
-from .utils import get_registration_week_nuber, get_time_from_last_registration, is_workshop_finished
+                          AttendanceSerializer,WorkshopAllSerializer,
+                          WorkshopSimpleSerializer, RegistrationCreateSerializer, EmailConfirmationSerializer)
+from .utils import get_registration_week_nuber, get_time_from_last_registration, is_workshop_finished, validate_email_workshop
 from drf_spectacular.utils import extend_schema, OpenApiResponse
+from rest_framework.throttling import UserRateThrottle
+from .throttles import (RegisterThrottleMin, RegisterThrottleHour, RegisterThrottleHalfDay, RegisterThrottleDay, 
+                        LoginThrottle, RefreshThrottle, LoginUserNameThrottle,
+                        ConfirmEmailDayThrottle, ConfirmEmailHourThrottle, ConfirmEmailThrottle)
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 # Create your views here.
 
 
 class HealthCheckView(views.APIView):
+
     def get(self, request, *args, **kwargs):
         return Response({"status": "ok"}, status=status.HTTP_200_OK)
 
@@ -38,26 +45,68 @@ class WorkshopDetailView(generics.RetrieveAPIView):
     lookup_field = 'id'
 
 class SpeakerListView(generics.ListAPIView):
+
     queryset = Speaker.objects.select_related('partner').all()
     serializer_class = SpeakerSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'bio', 'partner__name']
 class SpeakerDetailView(generics.RetrieveAPIView):
+    throttle_classes = [UserRateThrottle]
     queryset = Speaker.objects.all()
     serializer_class = SpeakerSerializer
     lookup_field = 'id'
 
 class PartnerListView(generics.ListAPIView):
+
     queryset = Partner.objects.all()
     serializer_class = PartnerSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'short_description']
 
 class PartnerDetailView(generics.RetrieveAPIView):
+
     queryset = Partner.objects.all()
     serializer_class = PartnerSerializer
     lookup_field = 'id'
-class RegistrationCreateView(generics.CreateAPIView):
+
+class RegistrationCreateView(views.APIView):
+    throttle_classes = [RegisterThrottleMin, RegisterThrottleHour, RegisterThrottleHalfDay, RegisterThrottleDay]
+    queryset = Registration.objects.all()
+    serializer_class = RegistrationCreateSerializer
+    
+    def post(self, request):
+        serializer = RegistrationCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            data = serializer.validated_data
+            email = data.get('email', '')
+            workshop_id = data.get('workshop_id', '')
+            validation_error = validate_email_workshop(email, workshop_id)
+            if validation_error:
+                return Response({"error": validation_error}, status=status.HTTP_400_BAD_REQUEST)
+            msg = serializer.save()
+            return Response({"status": msg}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EmailConfirmationView(views.APIView):
+
+    def post(self, request):
+        serializer = EmailConfirmationSerializer(data=request.data)
+        if serializer.is_valid():
+            data = serializer.validated_data.get('token',{})
+            email = data.token.get('email')
+            workshop_id = data.get('workshop_id')
+            validation_error = validate_email_workshop(email, workshop_id)
+            if validation_error:
+                return Response({"error": validation_error}, status=status.HTTP_400_BAD_REQUEST)
+            msg = serializer.save()
+            return Response({"status": msg}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+    '''class RegistrationCreateView(generics.CreateAPIView):
+    throttle_classes = [RegisterThrottleMin, RegisterThrottleHour, RegisterThrottleHalfDay, RegisterThrottleDay]
     queryset = Registration.objects.all()
     serializer_class = RegistrationSerializer
     @extend_schema(
@@ -70,11 +119,19 @@ class RegistrationCreateView(generics.CreateAPIView):
         }
     )
     def create(self, request, *args, **kwargs):
+        email = request.data.get('email', '')
+        if email and is_temp_email(email):
+            return Response({
+                'error': 'boot detected not alowed'
+            }, status=400)
+
+        # Block temp emails in message content
         if Workshop.objects.filter(id=request.data['workshop']).first().week != get_registration_week_nuber():
             return Response({"error": "Registration is closed or didn't start yet"}, status=status.HTTP_400_BAD_REQUEST)
         return super().create(request, *args, **kwargs)
-
+'''
 class CertificateListView(generics.ListAPIView):
+
     permission_classes = [IsAuthenticated]
     queryset = Certificate.objects.all()
     serializer_class = CertificateSerializer
@@ -112,3 +169,10 @@ class AttendanceCreateView(generics.CreateAPIView):
             if get_time_from_last_registration(last_attendance) < 12:
                 return Response({"error": "attendance already exists for this day"}, status=status.HTTP_409_CONFLICT)
         return super().create(request, *args, **kwargs)
+
+
+class LoginView(TokenObtainPairView):
+    throttle_classes = [LoginThrottle, LoginUserNameThrottle]
+
+class RefreshView(TokenRefreshView):
+    throttle_classes = [RefreshThrottle]

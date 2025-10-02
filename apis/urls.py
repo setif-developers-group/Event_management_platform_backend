@@ -14,4 +14,7 @@ urlpatterns = [
     path('certificates/generate/<int:workshop>/', views.GenerateCertificatesView.as_view(), name='generate-certificates'),
     path('certificates/<int:id>/', views.CertificateDetailView.as_view(), name='certificate-detail'),
     path('attendances/', views.AttendanceCreateView.as_view(), name='attendance-list-create'),
+    path('token/', views.LoginView.as_view(), name='login'),
+    path('token/refresh/', views.RefreshView.as_view(), name='token-refresh'),
+    path('confirm-email/', views.EmailConfirmationView.as_view(), name='email-confirmation'),
 ]
