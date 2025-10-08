@@ -1,8 +1,21 @@
 from rest_framework import serializers
 from app_models.models import Workshop, Speaker, Partner, Registration, Certificate, Attendance, AttendanceType
-from django_recaptcha.fields import ReCaptchaField
+from django_recaptcha.fields import ReCaptchaField as BaseReCaptchaField
 from .utils import sent_email_confirmation_email, create_email_confirmation_token, decode_email_confirmation_token
 import jwt
+from decouple import config
+
+class ReCaptchaField(serializers.CharField):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.write_only = True
+        self.recaptcha = BaseReCaptchaField()
+
+    def to_internal_value(self, data):
+        value = super().to_internal_value(data)
+        # Validate using django-recaptcha's validation
+        self.recaptcha.clean(value)
+        return value
 class WorkshopSerializer(serializers.ModelSerializer):
     class Meta:
         model = Workshop
@@ -49,19 +62,39 @@ class RegistrationCreateSerializer(serializers.Serializer):
     email = serializers.EmailField()
     phone_number = serializers.CharField(max_length=10, min_length=10)
     attendance_type = serializers.ChoiceField(choices=AttendanceType.choices)
-    captcha = ReCaptchaField()
+    captcha = ReCaptchaField(required=False)
+
+    def validate(self, data):
+        request = self.context.get('request')
+        
+        # Check if it's a chatbot request
+        is_chatbot = (request.headers.get('SSL-Chatbot-Key') == config('SSL_CHATBOT_KEY', default='your-secret-key'))
+        if is_chatbot:
+            # If it's a chatbot request, remove captcha validation
+            data.pop('captcha', None)
+            return data
+            
+        # The captcha field will handle validation through the ReCaptchaField class
+        return data
+        
+
     def save(self, **kwargs):
         data = self.validated_data
+        workshop = data.pop('workshop')
+        data['workshop_id'] = workshop.id
+        data['workshop_title'] = workshop.title
+        data['workshop_date'] = workshop.date
         payload = create_email_confirmation_token(data)
         sent_email_confirmation_email(data, payload)
         return f'A confirmation email has been sent to {data.get("email")}. Please check your inbox to confirm your registration.'
     
 class EmailConfirmationSerializer(serializers.Serializer):
     token = serializers.CharField()
-    captcha = ReCaptchaField()
-    def validate_token(self, value):
+    captcha = ReCaptchaField(required=True)
+    def validate(self, data):
         try:
-            payload = decode_email_confirmation_token(value)
+            payload = decode_email_confirmation_token(data.get('token'))
+            print('payload', payload)
             return payload
         except jwt.ExpiredSignatureError as e:
             raise serializers.ValidationError(str(e))
@@ -71,9 +104,9 @@ class EmailConfirmationSerializer(serializers.Serializer):
             raise serializers.ValidationError(str(e))
 
     def save(self, **kwargs):
-        payload = self.validated_data
+        payload = self.validated_data   
         email = payload.get('email')
-        workshop_id = payload.get('workshop_id')
+        workshop_id = payload.get('workshop')
         first_name = payload.get('first_name')
         last_name = payload.get('last_name')
         phone_number = payload.get('phone_number')
@@ -89,7 +122,7 @@ class EmailConfirmationSerializer(serializers.Serializer):
                 email=email,
                 phone_number=phone_number,
                 attendance_type=attendance_type,
-                confirmed=True
+                confirmed=False
             )
             return 'Your email has been confirmed and registration completed successfully.'
 

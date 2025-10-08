@@ -11,10 +11,12 @@ from .serializers import (WorkshopSerializer, SpeakerSerializer,
 from .utils import get_registration_week_nuber, get_time_from_last_registration, is_workshop_finished, validate_email_workshop
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework.throttling import UserRateThrottle
-from .throttles import (RegisterThrottleMin, RegisterThrottleHour, RegisterThrottleHalfDay, RegisterThrottleDay, 
+from .throttles import (RegisterThrottleMin, RegisterThrottleHour, RegisterThrottleDay, 
                         LoginThrottle, RefreshThrottle, LoginUserNameThrottle,
                         ConfirmEmailDayThrottle, ConfirmEmailHourThrottle, ConfirmEmailThrottle)
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 # Create your views here.
 
 
@@ -30,7 +32,7 @@ class WorkshopListView(generics.ListAPIView):
     search_fields = ['title', 'description', 'speakers__name', 'partner__name'] 
 
     def get_queryset(self):
-        return super().get_queryset().filter(week=get_registration_week_nuber())
+        return super().get_queryset().filter(week=get_registration_week_nuber()).filter(date__gte = datetime.now(tz=ZoneInfo('Africa/Algiers') )+ timedelta(hours=16))
 
 class WorkshopListAllView(generics.ListAPIView):
     queryset = Workshop.objects.all()
@@ -70,33 +72,47 @@ class PartnerDetailView(generics.RetrieveAPIView):
     lookup_field = 'id'
 
 class RegistrationCreateView(views.APIView):
-    throttle_classes = [RegisterThrottleMin, RegisterThrottleHour, RegisterThrottleHalfDay, RegisterThrottleDay]
+    throttle_classes = [RegisterThrottleMin, RegisterThrottleHour, RegisterThrottleDay]
     queryset = Registration.objects.all()
     serializer_class = RegistrationCreateSerializer
     
     def post(self, request):
-        serializer = RegistrationCreateSerializer(data=request.data)
-        if serializer.is_valid():
-            data = serializer.validated_data
-            email = data.get('email', '')
-            workshop_id = data.get('workshop_id', '')
-            validation_error = validate_email_workshop(email, workshop_id)
-            if validation_error:
-                return Response({"error": validation_error}, status=status.HTTP_400_BAD_REQUEST)
-            msg = serializer.save()
-            return Response({"status": msg}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = RegistrationCreateSerializer(data=request.data,context={'request': request})
+
+        try:
+            if serializer.is_valid():
+                
+                data = serializer.validated_data
+                print('data', data)
+                email = data.get('email', '')
+                workshop_id = data.get('workshop').id
+                print('email', email, 'workshop_id', workshop_id)
+                validation_error = validate_email_workshop(email, workshop_id)
+                if validation_error:
+                    return Response({"error": validation_error}, status=status.HTTP_400_BAD_REQUEST)
+                print('we will save')
+                msg = serializer.save()
+                return Response({"status": msg}, status=status.HTTP_201_CREATED)
+            print('errors', serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error ERROR": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
 
 class EmailConfirmationView(views.APIView):
 
     def post(self, request):
+        print('data', request.data)
         serializer = EmailConfirmationSerializer(data=request.data)
         if serializer.is_valid():
-            data = serializer.validated_data.get('token',{})
-            email = data.token.get('email')
-            workshop_id = data.get('workshop_id')
+            data = serializer.validated_data
+            print('validated data', data)
+            email = data.get('email')
+            workshop_id = int(data.get('workshop'))
+            print('email', email, 'workshop', workshop_id)
             validation_error = validate_email_workshop(email, workshop_id)
-            if validation_error:
+            if validation_error:    
                 return Response({"error": validation_error}, status=status.HTTP_400_BAD_REQUEST)
             msg = serializer.save()
             return Response({"status": msg}, status=status.HTTP_201_CREATED)

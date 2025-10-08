@@ -32,7 +32,39 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=[], cast=Csv())
 
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default=[], cast=Csv())
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "https://sdg-skills-lab.setif-developers-club.com",
+    "https://ssl-api.setif-developers-club.com",
+    "https://setif-developers-club.com",
+]
+CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+RECAPTCHA_PUBLIC_KEY = config('RECAPTCHA_PUBLIC_KEY', default='your-site-key')
+RECAPTCHA_PRIVATE_KEY = config('RECAPTCHA_PRIVATE_KEY', default='your-secret-key')
 cloudinary.config( 
   	cloud_name = config('CLOUD_NAME'),
   	api_key = config('CLOUD_API_KEY'),
@@ -151,10 +183,9 @@ REST_FRAMEWORK = {
         'login': '10/hour',
         'username_login': '3/hour',
         'refresh': '10/hour',
-        'registration_min': '2/min',
-        'registration_hour': '5/hour',
-        'registration_half_day': '7/12_hour',
-        'registration_day': '14/day',
+        'registration_min': '15/min',
+        'registration_hour': '150/hour',
+        'registration_day': '500/day',
     },
 }
 
@@ -202,12 +233,6 @@ OTP_EMAIL_SENDER = config('OTP_EMAIL_SENDER', default='ay28mene@gmail.com')
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
-CORS_ALLOWED_ORIGINS = [
-    "https://ssl-api.setif-developers-club.com",
-    "https://skills-lab.setif-developers-club.com",
-    "https://sdg-chat-bots-server.onrender.com",
-    "https://sdg-chat-bots.onrender.com",# for local development
-]
 from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),  # 1 years for access token
@@ -217,5 +242,3 @@ SIMPLE_JWT = {
 
 
 
-RECAPTCHA_PUBLIC_KEY = config('RECAPTCHA_PUBLIC_KEY', default='your-site-key')
-RECAPTCHA_PRIVATE_KEY = config('RECAPTCHA_PRIVATE_KEY', default='your-secret-key')

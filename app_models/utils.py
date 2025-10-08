@@ -194,18 +194,18 @@ def create_workshops_from_file(file):
 
     for row in read_values_from_file(file,except_headers):
         if row['partner']:
-            partner = Partner.objects.filter(name=row['partner'].strip()).first()
+            partner = Partner.objects.filter(name=row['partner']).first()
         else:
             partner = None
         if partner is None and row['partner'] is not None:
-            partner = Partner.objects.create(name=row['partner'].strip())
+            partner = Partner.objects.create(name=row['partner'])
         speakers = row['speaker'].split(',') if row['speaker'] else []
         speaker = None
         speakers_ids = []
         for speaker_name in speakers:
-            speaker = Speaker.objects.filter(name=speaker_name.strip()).first()
+            speaker = Speaker.objects.filter(name=speaker_name).first()
             if speaker is None:
-                speaker = Speaker.objects.create(name=speaker_name.strip(), bio="Bio not provided", partner=partner)
+                speaker = Speaker.objects.create(name=speaker_name, bio="Bio not provided", partner=partner)
             speakers_ids.append(speaker.id)
         workshop = Workshop.objects.get_or_create(
                     title=row['title'],
@@ -226,10 +226,10 @@ def create_speakers_from_file(file):
     except_headers = ['name', 'bio','partner', 'contact']
 
     for row in read_values_from_file(file,except_headers):
-        partner = Partner.objects.filter(name=row['partner'].strip()).first()
+        partner = Partner.objects.filter(name=row['partner']).first()
         if partner is None and row['partner'] is not None:
-            partner = Partner.objects.create(name=row['partner'].strip())
-        Speaker.objects.get_or_create(name=row['name'].strip(), bio=row['bio'].strip(), partner=partner, contact=row['contact'].strip())
+            partner = Partner.objects.create(name=row['partner'])
+        Speaker.objects.get_or_create(name=row['name'], bio=row['bio'], partner=partner, contact=row['contact'])
     return
 
 def create_partners_from_file(file):

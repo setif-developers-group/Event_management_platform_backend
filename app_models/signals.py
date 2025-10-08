@@ -39,7 +39,7 @@ def send_confirmation_email(sender, instance: Registration, created, **kwargs):
             body=html_message,
             attachments=[{
                 'filename': f'sdg_skills_lab_{instance.workshop.title}_{instance.first_name}_{instance.last_name}_invitation.png',
-                'content': bg.tobytes(),
+                'content': bg.getvalue(),
                 'mimetype': 'image/png'
             }]
         )

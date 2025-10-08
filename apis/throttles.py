@@ -7,8 +7,6 @@ class RegisterThrottleMin(throttling.AnonRateThrottle):
 class RegisterThrottleHour(throttling.AnonRateThrottle):
     scope = 'registration_hour'
 
-class RegisterThrottleHalfDay(throttling.AnonRateThrottle):
-    scope = 'registration_half_day'
 
 class RegisterThrottleDay(throttling.AnonRateThrottle):
     scope = 'registration_day'

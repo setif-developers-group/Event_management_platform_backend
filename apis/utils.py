@@ -1,10 +1,9 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 from app_models.models import Attendance
 from decouple import config
 from app_models.utils import sent_email    
 import jwt
-from datetime import datetime, timedelta
 import re
 from app_models.models import Registration, Workshop
 
@@ -34,80 +33,86 @@ def is_workshop_finished(workshop):
     return today > workshop.date + workshop.duration
 
 
-def sent_email_confirmation_email(payload:str, data: dict):
-    confirmation_url = f"{config('FRONTEND_URL', default='https://skills-lab.setif-developers-club.com')}/email-confirmation/confirm-email?token={payload}"
-    subject = f'Confirm Your Email for {data.get("workshop_title")} Registration'
-    body = f'''
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <style>
-                body {{ font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; background: #f2f4f7; }}
-                .container {{ max-width: 600px; margin: 20px auto; padding: 0 20px; }}
-                .header {{ background: linear-gradient(135deg, #1772cd 0%, #359aec 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
-                .content {{ background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }}
-                .workshop-info {{ background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1772cd; }}
-                .footer {{ text-align: center; margin-top: 30px; color: #666; font-size: 14px; }}
-                .button {{ display: inline-block; background: #1772cd; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>📧 Confirm Your Email</h1>
-                    <p>Welcome to SDG Skills Lab</p>
-                </div>
-                
-                <div class="content">
-                    <h2>Dear {data.get('first_name')},</h2>
-                    <p>Thank you for registering for our workshop! Before we can confirm your spot, please verify your email address by clicking the button below:</p>
-                    
-                    <div class="workshop-info">
-                        <h3>📚 {data.get('workshop_title')}</h3>
-                        <p><strong>Participant:</strong> {data.get('full_name')}</p>
+def sent_email_confirmation_email(data: dict, payload:str):
+    try:
+        confirmation_url = f"{config('FRONTEND_URL', default=config('FRONTEND_URL', default='https://skills-lab.setif-developers-club.com'))}/email-confirmation/confirm-email?token={payload}"
+        subject = f'Confirm Your Email for {data.get("workshop_title")} Registration'
+        body = f'''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <style>
+                    body {{ font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; background: #f2f4f7; }}
+                    .container {{ max-width: 600px; margin: 20px auto; padding: 0 20px; }}
+                    .header {{ background: linear-gradient(135deg, #1772cd 0%, #359aec 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                    .content {{ background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }}
+                    .workshop-info {{ background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1772cd; }}
+                    .footer {{ text-align: center; margin-top: 30px; color: #666; font-size: 14px; }}
+                    .button {{ display: inline-block; background: #1772cd; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>📧 Confirm Your Email</h1>
+                        <p>Welcome to SDG Skills Lab</p>
                     </div>
-
-                    <p style="text-align:center;">
-                        <a href="{confirmation_url}" class="button">Confirm Email Address</a>
-                    </p>
-
-                    <p>If the button above doesn't work, copy and paste the following link into your browser:</p>
-                    <p style="word-break: break-all;">{confirmation_url}</p>
                     
-                    <div class="footer">
-                        <p><strong>Best regards,</strong><br>
-                        SDG Skills Lab Team</p>
+                    <div class="content">
+                        <h2>Dear {data.get('first_name')},</h2>
+                        <p>Thank you for registering for our workshop! Before we can confirm your spot, please verify your email address by clicking the button below:</p>
                         
-                        <p><em>Questions? Reply to this email and we'll help you out!</em></p>
+                        <div class="workshop-info">
+                            <h3>📚 {data.get('workshop_title')}</h3>
+                            <p><strong>Participant:</strong> {data.get('first_name')} {data.get('last_name')}</p>
+                            <p><strong>Date:</strong> {data.get('workshop_date')}</p>
+                        </div>
+
+                        <p style="text-align:center;">
+                            <a href="{confirmation_url}" class="button">Confirm Email Address</a>
+                        </p>
+
+                        <p>If the button above doesn't work, copy and paste the following link into your browser:</p>
+                        <p style="word-break: break-all;">{confirmation_url}</p>
+                        
+                        <div class="footer">
+                            <p><strong>Best regards,</strong><br>
+                            SDG Skills Lab Team</p>
+                            
+                            <p><em>Questions? Reply to this email and we'll help you out!</em></p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </body>
-        </html>
-        '''
-    sent_email(
-        to_email=data.get('email'),
-        subject=subject,
-        body=body
-    )
-    return True
+            </body>
+            </html>
+            '''
+        sent_email(
+            to_email=data.get('email'),
+            subject=subject,
+            body=body
+        )
+        return True
+    except Exception as e:
+        raise Exception(f'{str(e)} - {data}- sent_email_confirmation_email error')
 
 
 def create_email_confirmation_token(data: dict) -> str:
-
-    payload = {
-        'email': data.get('email'),
-        'first_name': data.get('first_name'),
-        'last_name': data.get('last_name'),
-        'workshop_id': data.get('workshop_id'),
-        'phone_number': data.get('phone_number'),
-        'attendance_type': data.get('attendance_type'),
-        'exp': datetime.now() + timedelta(hours=12), 
-        'iat': datetime.now()
-    }
-    token = jwt.encode(payload, config('JWT_SECRET_KEY', default='your-secret-key'), algorithm='HS256')
-    return token
+    try:
+        payload = {
+            'email': data.get('email'),
+            'first_name': data.get('first_name'),
+            'last_name': data.get('last_name'),
+            'workshop': data.get('workshop_id'),
+            'phone_number': data.get('phone_number'),
+            'attendance_type': data.get('attendance_type'),
+            'exp': datetime.now() + timedelta(hours=12), 
+            'iat': datetime.now()
+        }
+        token = jwt.encode(payload, config('JWT_SECRET_KEY', default='your-secret-key'), algorithm='HS256')
+        return token
+    except Exception as e:
+        raise Exception(f'{str(e)} - {data}- create_email_confirmation_token error')
 
 def decode_email_confirmation_token(token: str) -> dict:
     try:
@@ -186,13 +191,15 @@ def contains_temp_email(text):
 
 
 def validate_email_workshop(email: str, workshop_id: int) -> bool:
-    
-    if not email or not workshop_id:
-        return 'Invalid email or workshop ID'
-    if is_temp_email(email):
-        return "bot detected not allowed"
-    if Registration.objects.filter(email=email, workshop_id=workshop_id).exists():
-        return "Registration is already exists for this email and workshop."
-    if Workshop.objects.filter(id=workshop_id).first().week != get_registration_week_nuber():
-        return "Registration is closed or didn't start yet"
-    return False
+    try:
+        if not email or not workshop_id:
+            return 'Invalid email or workshop ID'
+        if is_temp_email(email):
+            return "bot detected not allowed"
+        if Registration.objects.filter(email=email, workshop_id=workshop_id).exists():
+            return "Registration is already exists for this email and workshop."
+        if Workshop.objects.filter(id=workshop_id).first().week != get_registration_week_nuber():
+            return "Registration is closed or didn't start yet"
+        return False
+    except Exception as e:
+        raise Exception(f'{str(e)} - {email} - {workshop_id} - validate_email eroro')
